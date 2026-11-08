@@ -1334,6 +1334,35 @@ func TestSecretScanner(t *testing.T) {
 	wantFindingOpenAIServiceAPIKey := openAIFinding("openai-service-api-key", "OpenAI Service API Key", "HIGH", 68)
 	wantFindingOpenAIRealtimeClientSecret := openAIFinding("openai-realtime-client-secret", "OpenAI Realtime Client Secret", "MEDIUM", 35)
 
+	anthropicFinding := func(ruleID, title, severity string, length int) types.SecretFinding {
+		masked := strings.Repeat("*", length)
+		return types.SecretFinding{
+			RuleID:    ruleID,
+			Category:  secret.CategoryAnthropic,
+			Title:     title,
+			Severity:  severity,
+			StartLine: 1,
+			EndLine:   1,
+			Match:     masked,
+			Code: types.Code{
+				Lines: []types.Line{
+					{
+						Number:      1,
+						Content:     masked,
+						Highlighted: masked,
+						IsCause:     true,
+						FirstCause:  true,
+						LastCause:   true,
+					},
+				},
+			},
+			Offset: 0,
+		}
+	}
+	wantFindingAnthropicAPIKey := anthropicFinding("anthropic-api-key", "Anthropic API Key", "CRITICAL", 108)
+	wantFindingAnthropicAdminKey := anthropicFinding("anthropic-admin-key", "Anthropic Admin Key", "CRITICAL", 110)
+	wantFindingAnthropicOAuthToken := anthropicFinding("anthropic-oauth-token", "Anthropic OAuth Token", "CRITICAL", 113)
+
 	wantFindingMavenSettingsPassword := types.SecretFinding{
 		RuleID:    "maven-settings-password",
 		Category:  secret.CategoryMaven,
@@ -2085,6 +2114,42 @@ func TestSecretScanner(t *testing.T) {
 			name:          "invalid OpenAI tokens",
 			configPath:    filepath.Join("testdata", "skip-test.yaml"),
 			inputFilePath: filepath.Join("testdata", "openai-invalid.txt"),
+			want:          types.Secret{},
+		},
+		{
+			name:          "find Anthropic API Key",
+			configPath:    filepath.Join("testdata", "skip-test.yaml"),
+			inputFilePath: filepath.Join("testdata", "anthropic-api-key.txt"),
+			want: types.Secret{
+				FilePath: filepath.Join("testdata", "anthropic-api-key.txt"),
+				Findings: []types.SecretFinding{wantFindingAnthropicAPIKey},
+			},
+		},
+		{
+			name:          "find Anthropic Admin Key",
+			configPath:    filepath.Join("testdata", "skip-test.yaml"),
+			inputFilePath: filepath.Join("testdata", "anthropic-admin-key.txt"),
+			want: types.Secret{
+				FilePath: filepath.Join("testdata", "anthropic-admin-key.txt"),
+				Findings: []types.SecretFinding{wantFindingAnthropicAdminKey},
+			},
+		},
+		{
+			name:          "find Anthropic OAuth Token",
+			configPath:    filepath.Join("testdata", "skip-test.yaml"),
+			inputFilePath: filepath.Join("testdata", "anthropic-oauth-token.txt"),
+			want: types.Secret{
+				FilePath: filepath.Join("testdata", "anthropic-oauth-token.txt"),
+				Findings: []types.SecretFinding{wantFindingAnthropicOAuthToken},
+			},
+		},
+		{
+			// Too-short bodies, placeholder dots, and a bare prefix must all be
+			// ignored — even when the `sk-ant-*` keyword is present, the length
+			// anchors reject them.
+			name:          "invalid Anthropic tokens",
+			configPath:    filepath.Join("testdata", "skip-test.yaml"),
+			inputFilePath: filepath.Join("testdata", "anthropic-invalid.txt"),
 			want:          types.Secret{},
 		},
 		{
