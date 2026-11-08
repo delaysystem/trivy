@@ -96,6 +96,7 @@ func (p *Parser) toPackage(dep Dependency) ftypes.Package {
 //   - numpy ==1.8.1
 //   - numpy 1.8.1 py27_0
 //   - numpy=1.8.1=py27_0
+//   - conda-forge::numpy=1.8.1
 //
 // cf. https://docs.conda.io/projects/conda-build/en/latest/resources/package-spec.html#examples-of-package-specs
 func (*Parser) parseDependency(line string) (string, string) {
@@ -104,7 +105,13 @@ func (*Parser) parseDependency(line string) (string, string) {
 	if len(parts) == 0 {
 		return "", ""
 	}
+	// Strip the channel prefix (e.g. `conda-forge::numpy` => `numpy`).
+	// The channel only selects where to install the package from, it is not part of the package name.
+	// cf. https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/pkg-specs.html
 	name := parts[0]
+	if i := strings.LastIndex(name, "::"); i >= 0 {
+		name = name[i+2:]
+	}
 	if len(parts) == 1 {
 		return name, ""
 	}

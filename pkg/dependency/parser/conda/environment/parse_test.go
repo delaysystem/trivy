@@ -211,6 +211,54 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			name:  "channel prefix is stripped from package names",
+			input: "testdata/channel-prefix.yaml",
+			want: environment.Packages{
+				Packages: []ftypes.Package{
+					{
+						Name:    "numpy",
+						Version: "1.26.4",
+						Locations: ftypes.Locations{
+							{
+								StartLine: 5,
+								EndLine:   5,
+							},
+						},
+					},
+					{
+						Name: "pandas",
+						Locations: ftypes.Locations{
+							{
+								StartLine: 7,
+								EndLine:   7,
+							},
+						},
+					},
+					{
+						Name:    "requests",
+						Version: "2.28.2",
+						Locations: ftypes.Locations{
+							{
+								StartLine: 8,
+								EndLine:   8,
+							},
+						},
+					},
+					{
+						Name:    "scipy",
+						Version: "1.11.4",
+						Locations: ftypes.Locations{
+							{
+								StartLine: 6,
+								EndLine:   6,
+							},
+						},
+					},
+				},
+				Prefix: "/opt/conda/envs/test-env",
+			},
+		},
+		{
 			name:    "invalid yaml file",
 			input:   "testdata/invalid.yaml",
 			wantErr: "cannot unmarshal !!str `invalid` into environment.environment",
